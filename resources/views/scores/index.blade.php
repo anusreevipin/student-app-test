@@ -24,7 +24,7 @@
 					type="text" 
 					class="form-control" 
 					name="scores[ {{ $course->id }} ]" 
-					value="{{ old( 'scores['.$course->id.']', $scores[$course->id]) }}" 
+					value="{{ old( 'scores['.$course->id.']', isset($scores[$course->id]) ? $scores[$course->id] : 0 ) }}" 
 				/>
 		</tr>
 		@endforeach
