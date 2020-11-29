@@ -4,18 +4,38 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\StudentService;
+use App\Http\Requests\Students\StudentRequest;
+use App\Services\MessageService;
+use App\Services\FilterService;
 
 class StudentsController extends Controller
 {
+   
+    private $messageService;
+    private $filterService;
+
+    /**
+     * Construct
+     */
+    public function __construct( MessageService $messageService, FilterService $filterService )
+    {
+        $this->messageService = $messageService;
+        $this->filterService = $filterService;
+    }
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function index( StudentService $StudentService )
-    {
+    {   
+
+        $students = $StudentService->getStudents();
+        $filter = $this->filterService->getStudent();
         return view('students.list')
-            ->with('title','Students list');
+            ->with('students',$students)
+            ->with('filter', $filter);
     }
 
     /**
@@ -56,9 +76,13 @@ class StudentsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
-    {
-        //
+    public function edit($id, StudentService $StudentService)
+    {   
+        $student = $StudentService->getStudent( $id );
+        if( $student == null ) return abort(404);
+
+        return view('students.edit')
+            ->with('student',$student);
     }
 
     /**
@@ -68,9 +92,17 @@ class StudentsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
-    {
-        //
+    public function update(StudentRequest $request, StudentService $StudentService, $id)
+    {   
+        $data = [
+            'name' => $request->student_name,
+            'date_of_birth' => $request->student_dob
+        ];
+
+        $StudentService->updateStudent( $id, $data);
+        $this->messageService->set('success','Student details has been updated');
+        return redirect( route('students.index') );
+
     }
 
     /**
@@ -82,5 +114,30 @@ class StudentsController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    /**
+     * Set student filters
+     * @param  Request filter params 
+     * @return Response
+     */
+    public function setFilter( Request $request )
+    {
+        $data = [
+            'name' => $request->student_name,
+            'date_of_birth' => $request->student_dob
+        ];
+
+        $this->filterService->setStudent( $data );
+        return redirect( route('students.index') );
+    }
+
+    /**
+     * Reset student filter
+     */
+    public function resetFilter()
+    {
+        $this->filterService->resetStudent();
+        return redirect( route('students.index') );
     }
 }
