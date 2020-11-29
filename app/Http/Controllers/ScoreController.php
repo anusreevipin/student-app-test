@@ -3,9 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\StudentService;
+use App\Services\CourseService;
+use App\Services\ScoreService;
+use App\Services\MessageService;
 
 class ScoreController extends Controller
 {
+    
+    private $courseService;
+    private $messageService;
+
+    /**
+     * Construct
+     */
+    public function __construct( CourseService $courseService, MessageService $messageService )
+    {
+        $this->courseService = $courseService;
+        $this->messageService = $messageService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -13,7 +30,7 @@ class ScoreController extends Controller
      */
     public function index()
     {
-        return view('scores.index');
+        
     }
 
     /**
@@ -43,9 +60,18 @@ class ScoreController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
-    {
-        //
+    public function show(StudentService $studentService, $id)
+    {   
+        $student = $studentService->getStudent( $id );
+        if( $student == null ) return abort(404);
+
+        $courses = $this->courseService->getCourses();
+        $scores = $student->scores()->pluck('score','course_id');
+
+        return view('scores.index')
+            ->with('student', $student)
+            ->with('courses', $courses)
+            ->with('scores', $scores);
     }
 
     /**
@@ -66,9 +92,18 @@ class ScoreController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, StudentService $studentService, ScoreService $scoreService, $studentID)
     {
-        //
+        $student = $studentService->getStudent( $studentID );
+        if( $student == null ) return abort(404);
+
+        foreach($request->scores as $courseID => $score) {
+            $scoreService->saveScore( $studentID, $courseID, $score );
+        }
+
+
+        $this->messageService->set('suc','Score details updated');
+        return redirect( route('scores.show', $student->id ));
     }
 
     /**

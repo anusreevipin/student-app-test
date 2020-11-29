@@ -24,7 +24,7 @@
 		<td>{{ ucwords( $student->name ) }}</td>
 		<td>{{ date('d F Y', strtotime( $student->date_of_birth )) }}</td>
 		<td><a href="{{ route('students.edit', $student->id) }}">Edit</a></td>
-		<td><a href="{{ route('scores.index', $student->id) }}">Scores</a></td>
+		<td><a href="{{ route('scores.show', $student->id) }}">Scores</a></td>
 	</tr>
 	@endforeach
 
